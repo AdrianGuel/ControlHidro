@@ -10,14 +10,14 @@ dsys = c2d(Avsys,Ts,'foh');
 [num,den] = tfdata(dsys,'v');
 y=zeros(1,length(den));
 u=zeros(1,length(num)+ 21);
-e=zeros(1,3);
+e=zeros(1,3); q=zeros(1,3);
 %% Control parameters
-kp=70;
+kp=30;
 kd=0;
 ki=0.3;
-q0=kp+kd/Ts+ki*Ts;
-q1=-kp-2*kd/Ts;
-q2=kd/Ts;
+q(1)=kp+kd/Ts+ki*Ts;
+q(2)=-kp-2*kd/Ts;
+q(3)=kd/Ts;
 
 %% Setpoint
 dph=8;
@@ -27,6 +27,7 @@ fig=figure('visible','on');
 set(fig, 'Position',  [454,239,919,573])
 set(gcf,'color','w');
 t=0:0.5:1000; %simulationtime
+subplot(2,1,1)
 h = animatedline;
 h.Color='red';
 h.LineWidth=2;
@@ -34,15 +35,34 @@ axis([0,t(end)/60,0,14])
 ylabel('$P_h$','Interpreter','Latex','FontSize', 14)
 xlabel('$t$','Interpreter','Latex','FontSize', 14)
 
+subplot(2,1,2)
+h2 = animatedline;
+h2.Color='black';
+h2.LineWidth=2;
+xlim([0,t(end)/60])
+ylabel('$u$','Interpreter','Latex','FontSize', 14)
+xlabel('$t$','Interpreter','Latex','FontSize', 14)
+
 for k = 1:length(t)
     y(1)=Fk(y,u,num,den); %model
     e(1)=dph-y(1); %error
-    u(1)=u(2)+q0*e(1)+q1*e(2)+q2*e(3); %control
+    u(1)= control(u,e,q);%control PID
+    [y,e,u]=shifting(y,e,u);
     addpoints(h,t(k)/60,y(1));
+    addpoints(h2,t(k)/60,u(1));
     drawnow
-    y=circshift(y,1); 
-    u=circshift(u,1);
-    e=circshift(e,1);
+
+end
+
+function uk=control(u,e,q)
+    uk=u(2)+q(1)*e(1)+q(2)*e(2)+q(3)*e(3);
+    %% Saturation
+%     if uk>100
+%         uk=100;
+%     end
+%     if uk<-100
+%         uk=-100;
+%     end    
 end
 
 function yk=Fk(y,u,num,den)
@@ -54,4 +74,10 @@ function yk=Fk(y,u,num,den)
     if yk<0
         yk=0;
     end
+end
+
+function [y,e,u]=shifting(y,e,u)
+    y=circshift(y,1); 
+    u=circshift(u,1);
+    e=circshift(e,1);
 end
