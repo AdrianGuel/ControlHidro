@@ -8,7 +8,7 @@ load('statistics.mat')
 Ts=0.5;
 dsys = c2d(Avsys,Ts,'foh');
 [num,den] = tfdata(dsys,'v');
-y=zeros(1,length(den));
+y=5*ones(1,length(den));
 u=zeros(1,length(num)+ 21);
 e=zeros(1,3); q=zeros(1,3);
 %% Control parameters
@@ -20,20 +20,24 @@ q(2)=-kp-2*kd/Ts;
 q(3)=kd/Ts;
 
 %% Setpoint
-dph=8;
-
+%dph=8;
+t=0:0.5:1000; %simulationtime
+dph=8*heaviside(t)-6*heaviside(t-400);
 %% Simulation
 fig=figure('visible','on');
 set(fig, 'Position',  [454,239,919,573])
 set(gcf,'color','w');
-t=0:0.5:1000; %simulationtime
 subplot(2,1,1)
 h = animatedline;
 h.Color='red';
 h.LineWidth=2;
+hsp = animatedline;
+hsp.Color='blue';
+hsp.LineWidth=2;
 axis([0,t(end)/60,0,14])
 ylabel('$P_h$','Interpreter','Latex','FontSize', 14)
 xlabel('$t$','Interpreter','Latex','FontSize', 14)
+grid on
 
 subplot(2,1,2)
 h2 = animatedline;
@@ -42,13 +46,15 @@ h2.LineWidth=2;
 xlim([0,t(end)/60])
 ylabel('$u$','Interpreter','Latex','FontSize', 14)
 xlabel('$t$','Interpreter','Latex','FontSize', 14)
+grid on
 
 for k = 1:length(t)
     y(1)=Fk(y,u,num,den); %model
-    e(1)=dph-y(1); %error
+    e(1)=dph(k)-y(1); %error
     u(1)= control(u,e,q);%control PID
     [y,e,u]=shifting(y,e,u);
     addpoints(h,t(k)/60,y(1));
+    addpoints(hsp,t(k)/60,dph(k));
     addpoints(h2,t(k)/60,u(1));
     drawnow
 
@@ -57,11 +63,11 @@ end
 function uk=control(u,e,q)
     uk=u(2)+q(1)*e(1)+q(2)*e(2)+q(3)*e(3);
     %% Saturation
-%     if uk>100
-%         uk=100;
+%     if uk>20
+%         uk=20;
 %     end
-%     if uk<-100
-%         uk=-100;
+%     if uk<-20
+%         uk=-20;
 %     end    
 end
 
