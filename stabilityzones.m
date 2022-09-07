@@ -28,26 +28,40 @@ axis(ax2,[0 70 -0.5 1.5])
 kp0=-3000:1:3000;
 ki0=zeros(1,length(kp0));
 
+im=[Mim im];
+km=[Mkm km];
+Delays=[MD Delays];
+
 Cls=rand(length(im),3);
-B = 0.5*ones(length(im),1);
-Cls(:,3)=B;
+%B = 0.5*ones(length(im),1);
+%Cls(:,3)=B;
+
 for i=length(im):-1:1
     kpx=im(i).^(-1).*w.*(w.*cos(Delays(i).*w)+km(i).*sin(Delays(i).*w));
     kix=(-1).*im(i).^(-1).*w.^2.*((-1).*km(i).*cos(Delays(i).*w)+w.*sin(Delays(i).*w));
     [x0,y0] = intersections(kpx,kix,kp0,ki0);
     x0=x0(x0>=0);
     if length(x0)>1
-    index=find((kpx<=x0(2)) & (kix>=0) & (kpx>=0));
-    I=detectAC(index);
+        index=find((kpx<=x0(2)) & (kix>=0) & (kpx>=0));
+        I=detectAC(index);
     if I>1
         index=index(1:I);
     end
-    area(ax1,kpx(index),kix(index),'FaceColor',Cls(i,:),'FaceAlpha',0.3,'EdgeColor','none')
-    area(ax2,kpx(index),kix(index),'FaceColor',Cls(i,:),'FaceAlpha',0.3,'EdgeColor','none')
-    %plot(ax1,kpx(index),kix(index),'b','LineWidth',2)
-    %plot(ax2,kpx(index),kix(index),'b','LineWidth',2)
-    text(ax1,kpx(floor(index(end)/2)),kix(floor(index(end)/2)), sprintf('Sys %d', i),'Color','k')
-     text(ax2,kpx(floor(index(end)/2)),kix(floor(index(end)/2)), sprintf('Sys %d', i),'Color','k')
+       if i==1
+            plot(ax1,kpx(index),kix(index),'b','LineWidth',2)
+            plot(ax2,kpx(index),kix(index),'b','LineWidth',2)
+            area(ax1,kpx(index),kix(index),'FaceColor',[0.3,0.15,0.15],'FaceAlpha',0.3,'EdgeColor','none')
+            area(ax2,kpx(index),kix(index),'FaceColor',[0.3,0.15,0.15],'FaceAlpha',0.3,'EdgeColor','none')            
+             text(ax1,kpx(floor(index(end)/2)),kix(floor(index(end)/2)), sprintf('Av sys'),'Color','k')
+            text(ax2,kpx(floor(index(end)/2)),kix(floor(index(end)/2)), sprintf('Av sys'),'Color','k')
+       else
+            %area(ax1,kpx(index),kix(index),'FaceColor',Cls(i,:),'FaceAlpha',0.3,'EdgeColor','none')
+            %area(ax2,kpx(index),kix(index),'FaceColor',Cls(i,:),'FaceAlpha',0.3,'EdgeColor','none')
+            plot(ax1,kpx(index),kix(index),'b:','LineWidth',1)
+            plot(ax2,kpx(index),kix(index),'b:','LineWidth',1)
+            text(ax1,kpx(floor(index(end)/2)),kix(floor(index(end)/2)), sprintf('Sys %d', i),'Color','k')
+            text(ax2,kpx(floor(index(end)/2)),kix(floor(index(end)/2)), sprintf('Sys %d', i),'Color','k')
+       end
     else
         %plot(ax1,kpx,kix,'b','LineWidth',2)
         %plot(ax2,kpx,kix,'b','LineWidth',2)
@@ -60,6 +74,7 @@ kp=[30 100 300];
 kd=[0.3 4 10];
 
 plot(ax1,kp,kd,'k.','MarkerSize',15)
+plot(ax2,kp,kd,'k.','MarkerSize',15)
 
 s = tf('s');
 C1=kp(1)+kd(1)/s;
